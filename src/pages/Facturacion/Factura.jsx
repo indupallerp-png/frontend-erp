@@ -103,6 +103,125 @@ export default function Factura() {
     }
   }
 
+  const handleVerPDF = (factura) => {
+    const fmt = (n) =>
+      new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n ?? 0)
+    const fmtDate = (d) => {
+      if (!d) return '-'
+      const part = typeof d === 'string' && d.includes('T') ? d.split('T')[0] : String(d)
+      const dt = new Date(part + 'T00:00:00')
+      return isNaN(dt) ? '-' : dt.toLocaleDateString('es-AR')
+    }
+    const itemsRows = (factura.items || [])
+      .map(
+        (item) => `
+        <tr>
+          <td>${item.producto || '-'}</td>
+          <td style="text-align:center">${item.cantidad}</td>
+          <td style="text-align:right">${fmt(item.precioUnitario)}</td>
+          <td style="text-align:right">${fmt(Number(item.cantidad) * Number(item.precioUnitario))}</td>
+        </tr>`
+      )
+      .join('')
+    const ivaRow =
+      factura.tipo === 'A'
+        ? `<tr><td colspan="3" style="text-align:right"><strong>IVA (21%)</strong></td><td style="text-align:right">${fmt(factura.iva)}</td></tr>`
+        : ''
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Factura ${factura.numero}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #222; padding: 40px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 2px solid #1a3a5c; padding-bottom: 20px; }
+    .company-name { font-size: 22px; font-weight: 700; color: #1a3a5c; }
+    .company-info { font-size: 12px; color: #555; margin-top: 4px; line-height: 1.6; }
+    .invoice-box { text-align: right; }
+    .invoice-title { font-size: 28px; font-weight: 700; color: #1a3a5c; }
+    .invoice-tipo { display: inline-block; border: 2px solid #1a3a5c; padding: 2px 12px; font-size: 20px; font-weight: 700; margin-top: 4px; }
+    .invoice-number { font-size: 16px; font-weight: 600; margin-top: 6px; }
+    .section { margin-bottom: 20px; }
+    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #888; letter-spacing: 1px; margin-bottom: 6px; }
+    .client-box { background: #f5f7fa; border-radius: 6px; padding: 12px 16px; }
+    .client-name { font-size: 15px; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    thead tr { background: #1a3a5c; color: #fff; }
+    thead th { padding: 9px 12px; text-align: left; font-size: 12px; }
+    thead th:last-child { text-align: right; }
+    tbody tr:nth-child(even) { background: #f5f7fa; }
+    tbody td { padding: 8px 12px; border-bottom: 1px solid #e8eaed; }
+    .totals { margin-top: 16px; text-align: right; }
+    .totals table { width: auto; margin-left: auto; min-width: 260px; }
+    .totals td { padding: 5px 12px; }
+    .grand-total td { font-size: 16px; font-weight: 700; color: #1a3a5c; border-top: 2px solid #1a3a5c; padding-top: 8px; }
+    .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #aaa; border-top: 1px solid #e8eaed; padding-top: 16px; }
+    @media print { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="company-name">INDUPALL SRL</div>
+      <div class="company-info">
+        9 de Julio 1649, Pilar, Santa Fe, Argentina<br/>
+        Tel: +54 03404 470887
+      </div>
+    </div>
+    <div class="invoice-box">
+      <div class="invoice-title">FACTURA</div>
+      <div class="invoice-tipo">TIPO ${factura.tipo}</div>
+      <div class="invoice-number">${factura.numero}</div>
+      <div style="font-size:12px;color:#555;margin-top:4px">Fecha: ${fmtDate(factura.fecha)}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Cliente</div>
+    <div class="client-box">
+      <div class="client-name">${factura.cliente || '-'}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Detalle</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th style="text-align:center">Cant.</th>
+          <th style="text-align:right">Precio Unit.</th>
+          <th style="text-align:right">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsRows}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="totals">
+    <table>
+      <tbody>
+        <tr><td colspan="3" style="text-align:right"><strong>Subtotal</strong></td><td style="text-align:right">${fmt(factura.subtotal)}</td></tr>
+        ${ivaRow}
+        <tr class="grand-total"><td colspan="3" style="text-align:right">TOTAL</td><td style="text-align:right">${fmt(factura.total)}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">Sistema ERP Indupall &mdash; PulpoNet-Computacion</div>
+
+  <script>window.onload = () => window.print()</script>
+</body>
+</html>`
+    const win = window.open('', '_blank', 'width=900,height=700')
+    win.document.write(html)
+    win.document.close()
+    win.focus()
+  }
+
   const handleMarkEmitida = async (factura) => {
     try {
       await updateFactura(factura.id, { estado: 'emitida' })
@@ -151,14 +270,25 @@ export default function Factura() {
       key: 'acciones',
       label: 'Acciones',
       render: row => (
-        row.estado === 'pendiente' ? (
-          <button
-            className="btn btn-sm btn-success"
-            onClick={() => handleMarkEmitida(row)}
-          >
-            Emitir
-          </button>
-        ) : null
+        <div style={{ display: 'flex', gap: 4 }}>
+          {row.estado === 'pendiente' && (
+            <button
+              className="btn btn-sm btn-success"
+              onClick={() => handleMarkEmitida(row)}
+            >
+              Emitir
+            </button>
+          )}
+          {row.estado === 'emitida' && (
+            <button
+              className="btn btn-sm btn-secondary"
+              onClick={() => handleVerPDF(row)}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>picture_as_pdf</span>
+              Ver PDF
+            </button>
+          )}
+        </div>
       ),
     },
   ]

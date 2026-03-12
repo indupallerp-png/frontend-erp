@@ -3,7 +3,11 @@ export const formatCurrency = (amount) =>
 
 export const formatDate = (dateStr) => {
   if (!dateStr) return '-'
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-AR')
+  const datePart = typeof dateStr === 'string' && dateStr.includes('T')
+    ? dateStr.split('T')[0]
+    : String(dateStr)
+  const d = new Date(datePart + 'T00:00:00')
+  return isNaN(d) ? '-' : d.toLocaleDateString('es-AR')
 }
 
 export const formatDateTime = (dateStr) => {

@@ -23,13 +23,13 @@ export function useCuentas() {
 
   const addCuenta = async (data) => {
     const result = await api.createCuenta(data)
-    setCuentas(prev => [...prev, result])
+    await fetchAll()
     return result
   }
 
   const updateCuenta = async (id, data) => {
     const result = await api.updateCuenta(id, data)
-    setCuentas(prev => prev.map(c => (c.id === id ? result : c)))
+    await fetchAll()
     return result
   }
 
@@ -40,14 +40,7 @@ export function useCuentas() {
 
   const addMovimiento = async (data) => {
     const result = await api.createMovimiento(data)
-    setMovimientos(prev => [result, ...prev])
-    // Actualizar el saldo de la cuenta en el estado local
-    const delta = data.tipo === 'ingreso' ? Number(data.monto) : -Number(data.monto)
-    setCuentas(prev =>
-      prev.map(c =>
-        c.id === Number(data.cuentaId) ? { ...c, saldo: c.saldo + delta } : c
-      )
-    )
+    await fetchAll()
     return result
   }
 
