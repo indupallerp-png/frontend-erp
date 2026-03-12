@@ -37,7 +37,7 @@ export default function Layout() {
         mobileOpen={mobileOpen}
       />
       <div className={`app-main ${collapsed ? 'app-main--collapsed' : ''}`}>
-        <Header user={user} onMobileToggle={handleMobileToggle} />
+        <Header user={user} onMobileToggle={handleMobileToggle} onLogout={handleLogout} />
         <main className="app-content">
           <Outlet />
         </main>

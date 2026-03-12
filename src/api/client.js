@@ -39,7 +39,7 @@ export function removeToken() {
 
 // ─── Fetch centralizado ──────────────────────────────────────────────────────
 
-const BASE = '/api'
+const BASE = 'https://backend-erp-pvqv.onrender.com/api'
 
 export async function apiFetch(path, options = {}) {
   const token = getToken()

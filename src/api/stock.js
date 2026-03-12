@@ -4,19 +4,19 @@ import { apiFetch } from './client'
 
 export const getAll = (params = {}) => {
   const q = new URLSearchParams(params).toString()
-  return apiFetch(`/stock${q ? `?${q}` : ''}`)
+  return apiFetch(`/productos${q ? `?${q}` : ''}`)
 }
 
-export const getOne = (id) => apiFetch(`/stock/${id}`)
+export const getOne = (id) => apiFetch(`/productos/${id}`)
 
 export const create = (data) =>
-  apiFetch('/stock', { method: 'POST', body: data })
+  apiFetch('/productos', { method: 'POST', body: data })
 
 export const update = (id, data) =>
-  apiFetch(`/stock/${id}`, { method: 'PUT', body: data })
+  apiFetch(`/productos/${id}`, { method: 'PUT', body: data })
 
 export const remove = (id) =>
-  apiFetch(`/stock/${id}`, { method: 'DELETE' })
+  apiFetch(`/productos/${id}`, { method: 'DELETE' })
 
 export const aumentar = (id, cantidad) =>
   apiFetch(`/stock/${id}/aumentar`, { method: 'PATCH', body: { cantidad } })

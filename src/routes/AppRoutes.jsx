@@ -7,6 +7,7 @@ import Clientes from '../pages/Clientes/Clientes'
 import Proveedores from '../pages/Proveedores/Proveedores'
 import Facturacion from '../pages/Facturacion/Facturacion'
 import CompraStock from '../pages/CompraStock/CompraStock'
+import Productos from '../pages/Productos/Productos'
 import AdministracionCuentas from '../pages/AdministracionCuentas/AdministracionCuentas'
 
 export default function AppRoutes() {
@@ -26,6 +27,7 @@ export default function AppRoutes() {
         <Route path="proveedores" element={<Proveedores />} />
         <Route path="facturacion" element={<Facturacion />} />
         <Route path="compra-stock" element={<CompraStock />} />
+        <Route path="productos" element={<Productos />} />
         <Route path="administracion-cuentas" element={<AdministracionCuentas />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

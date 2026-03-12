@@ -5,7 +5,8 @@ const navItems = [
   { to: '/clientes', label: 'Clientes', icon: 'people' },
   { to: '/proveedores', label: 'Proveedores', icon: 'local_shipping' },
   { to: '/facturacion', label: 'Facturación', icon: 'receipt_long' },
-  { to: '/compra-stock', label: 'Compra y Stock', icon: 'inventory_2' },
+  { to: '/compra-stock', label: 'Control de stock', icon: 'inventory_2' },
+  { to: '/productos', label: 'Productos', icon: 'category' },
   { to: '/administracion-cuentas', label: 'Cuentas', icon: 'account_balance' },
 ]
 
