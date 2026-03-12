@@ -6,6 +6,7 @@ import FormField from '../../components/forms/FormField'
 import { useCuentas } from '../../hooks/useCuentas'
 import { useNotify } from '../../components/ui/Notification'
 import { formatCurrency, formatDate, getEstadoBadge } from '../../utils/formatters'
+import { exportToExcel } from '../../utils/exportExcel'
 import { TIPOS_CUENTA, FORMAS_PAGO } from '../../data/mockData'
 
 const EMPTY_CUENTA = {
@@ -187,7 +188,36 @@ export default function AdministracionCuentas() {
     },
   ]
 
-  const totalSaldo = cuentas.reduce((sum, c) => sum + (c.saldo || 0), 0)
+  const totalSaldo = cuentas.reduce((sum, c) => sum + (parseFloat(c.saldo) || 0), 0)
+
+  const handleExportCuentas = () => {
+    exportToExcel({
+      filename: 'cuentas',
+      title: 'Cuentas',
+      columns: [
+        { label: 'Nombre', key: 'nombre' },
+        { label: 'Tipo',   key: 'tipo' },
+        { label: 'Saldo',  key: 'saldo', format: r => formatCurrency(r.saldo) },
+        { label: 'Estado', key: 'estado' },
+      ],
+      data: cuentas,
+    })
+  }
+
+  const handleExportMovimientos = () => {
+    exportToExcel({
+      filename: 'movimientos',
+      title: 'Movimientos',
+      columns: [
+        { label: 'Cuenta',      key: 'cuentaId', format: r => cuentas.find(c => c.id === r.cuentaId)?.nombre || `#${r.cuentaId}` },
+        { label: 'Fecha',       key: 'fecha',    format: r => formatDate(r.fecha) },
+        { label: 'Descripción', key: 'descripcion' },
+        { label: 'Tipo',        key: 'tipo' },
+        { label: 'Monto',       key: 'monto',    format: r => formatCurrency(r.monto) },
+      ],
+      data: movimientosOrdenados,
+    })
+  }
 
   return (
     <div>
@@ -202,10 +232,16 @@ export default function AdministracionCuentas() {
             </strong>
           </span>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenCuenta()}>
-          <span className="material-symbols-outlined">add</span>
-          Nueva Cuenta
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={handleExportCuentas}>
+            <span className="material-symbols-outlined">download</span>
+            Exportar Excel
+          </button>
+          <button className="btn btn-primary" onClick={() => handleOpenCuenta()}>
+            <span className="material-symbols-outlined">add</span>
+            Nueva Cuenta
+          </button>
+        </div>
       </div>
 
       <div className="card mb-4">
@@ -222,10 +258,16 @@ export default function AdministracionCuentas() {
       {/* Movimientos Section */}
       <div className="d-flex justify-between align-center mb-3">
         <h2 className="section-title" style={{ marginBottom: 0 }}>Últimos movimientos</h2>
-        <button className="btn btn-secondary" onClick={handleOpenMovimiento}>
-          <span className="material-symbols-outlined">add</span>
-          Registrar Movimiento
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={handleExportMovimientos}>
+            <span className="material-symbols-outlined">download</span>
+            Exportar Excel
+          </button>
+          <button className="btn btn-secondary" onClick={handleOpenMovimiento}>
+            <span className="material-symbols-outlined">add</span>
+            Registrar Movimiento
+          </button>
+        </div>
       </div>
 
       <div className="card">

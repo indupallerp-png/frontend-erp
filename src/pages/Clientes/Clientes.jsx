@@ -7,6 +7,7 @@ import { useClientes } from '../../hooks/useClientes'
 import { useNotify } from '../../components/ui/Notification'
 import { getEstadoBadge, sanitizeByField } from '../../utils/formatters'
 import { CONDICIONES_IVA } from '../../data/mockData'
+import { exportToExcel } from '../../utils/exportExcel'
 
 const EMPTY_FORM = {
   razonSocial: '',
@@ -97,6 +98,23 @@ export default function Clientes() {
     }
   }
 
+  const handleExport = () => {
+    exportToExcel({
+      filename: 'clientes',
+      title: 'Clientes',
+      columns: [
+        { label: 'Razón Social',   key: 'razonSocial' },
+        { label: 'CUIT',           key: 'cuit' },
+        { label: 'Teléfono',       key: 'telefono' },
+        { label: 'Email',          key: 'email' },
+        { label: 'Dirección',      key: 'direccion' },
+        { label: 'Condición IVA',  key: 'condicionIva' },
+        { label: 'Estado',         key: 'estado' },
+      ],
+      data: filtered,
+    })
+  }
+
   const columns = [
     { key: 'razonSocial', label: 'Razón Social' },
     { key: 'cuit', label: 'CUIT' },
@@ -142,10 +160,16 @@ export default function Clientes() {
           <h1 className="page-title">Clientes</h1>
           <p className="page-subtitle">{clientes.filter(c => c.estado === 'activo').length} clientes activos</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpen()}>
-          <span className="material-symbols-outlined">person_add</span>
-          Nuevo cliente
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={handleExport}>
+            <span className="material-symbols-outlined">download</span>
+            Exportar Excel
+          </button>
+          <button className="btn btn-primary" onClick={() => handleOpen()}>
+            <span className="material-symbols-outlined">person_add</span>
+            Nuevo cliente
+          </button>
+        </div>
       </div>
 
       <div className="search-bar">

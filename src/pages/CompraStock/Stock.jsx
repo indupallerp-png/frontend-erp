@@ -6,18 +6,7 @@ import FormField from '../../components/forms/FormField'
 import { useStock } from '../../hooks/useStock'
 import { useNotify } from '../../components/ui/Notification'
 import { formatCurrency, getEstadoBadge } from '../../utils/formatters'
-import { CATEGORIAS_PRODUCTO } from '../../data/mockData'
-
-const EMPTY_FORM = {
-  sku: '',
-  nombre: '',
-  categoria: '',
-  costo: '',
-  precio: '',
-  stock: '',
-  stockMinimo: '',
-  estado: 'activo',
-}
+import { exportToExcel } from '../../utils/exportExcel'
 
 function getStockBadge(producto) {
   if (producto.stock <= 0) return { variant: 'danger', label: 'Sin stock' }
@@ -26,80 +15,75 @@ function getStockBadge(producto) {
 }
 
 export default function Stock() {
-  const { productos, addProducto, updateProducto } = useStock()
+  const { productos, aumentarStock, reducirStock } = useStock()
   const { addNotification } = useNotify()
 
   const [search, setSearch] = useState('')
   const [filterCategoria, setFilterCategoria] = useState('')
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState(EMPTY_FORM)
+  const [adjustModal, setAdjustModal] = useState(null) // null | { producto }
+  const [ajuste, setAjuste] = useState({ tipo: 'aumentar', cantidad: '' })
 
   const filtered = productos.filter(p => {
     const q = search.toLowerCase()
-    const matchSearch =
-      p.nombre?.toLowerCase().includes(q) ||
-      p.sku?.toLowerCase().includes(q)
+    const matchSearch = p.nombre?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q)
     const matchCategoria = !filterCategoria || p.categoria === filterCategoria
     return matchSearch && matchCategoria
   })
 
-  const handleOpen = (producto = null) => {
-    if (producto) {
-      setEditingId(producto.id)
-      setForm({
-        sku: producto.sku || '',
-        nombre: producto.nombre || '',
-        categoria: producto.categoria || '',
-        costo: producto.costo ?? '',
-        precio: producto.precio ?? '',
-        stock: producto.stock ?? '',
-        stockMinimo: producto.stockMinimo ?? '',
-        estado: producto.estado || 'activo',
-      })
-    } else {
-      setEditingId(null)
-      setForm(EMPTY_FORM)
-    }
-    setModalOpen(true)
+  const handleOpenAdjust = (producto) => {
+    setAdjustModal({ producto })
+    setAjuste({ tipo: 'aumentar', cantidad: '' })
   }
 
-  const handleClose = () => {
-    setModalOpen(false)
-    setEditingId(null)
-    setForm(EMPTY_FORM)
+  const handleCloseAdjust = () => {
+    setAdjustModal(null)
+    setAjuste({ tipo: 'aumentar', cantidad: '' })
   }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async (e) => {
+  const handleSubmitAjuste = async (e) => {
     e.preventDefault()
-    if (!form.nombre.trim()) {
-      addNotification('El nombre es obligatorio', 'error')
+    const cant = Number(ajuste.cantidad)
+    if (!cant || cant <= 0) {
+      addNotification('Ingresá una cantidad válida', 'error')
       return
     }
-
     try {
-      if (editingId) {
-        await updateProducto(editingId, form)
-        addNotification('Producto actualizado correctamente', 'success')
+      if (ajuste.tipo === 'aumentar') {
+        await aumentarStock(adjustModal.producto.id, cant)
+        addNotification(`Stock aumentado en ${cant} unidades`, 'success')
       } else {
-        await addProducto(form)
-        addNotification('Producto creado correctamente', 'success')
+        await reducirStock(adjustModal.producto.id, cant)
+        addNotification(`Stock reducido en ${cant} unidades`, 'success')
       }
-      handleClose()
+      handleCloseAdjust()
     } catch (err) {
-      addNotification(err.message || 'Error al guardar', 'error')
+      addNotification(err.message || 'Error al ajustar stock', 'error')
     }
+  }
+
+  const handleExport = () => {
+    exportToExcel({
+      filename: 'stock',
+      title: 'Control de Stock',
+      columns: [
+        { label: 'SKU',           key: 'sku' },
+        { label: 'Nombre',        key: 'nombre' },
+        { label: 'Categoría',     key: 'categoria' },
+        { label: 'Stock Actual',  key: 'stock' },
+        { label: 'Stock Mínimo',  key: 'stockMinimo' },
+        { label: 'Estado Stock',  key: 'id', format: r => getStockBadge(r).label },
+        { label: 'Costo',         key: 'costo',  format: r => formatCurrency(r.costo) },
+        { label: 'Precio Venta',  key: 'precio', format: r => formatCurrency(r.precio) },
+        { label: 'Estado',        key: 'estado' },
+      ],
+      data: filtered,
+    })
   }
 
   const categorias = [...new Set(productos.map(p => p.categoria).filter(Boolean))]
 
   const columns = [
-    { key: 'sku', label: 'SKU', render: row => <code style={{ fontSize: 12 }}>{row.sku}</code> },
+    { key: 'sku',    label: 'SKU',    render: row => <code style={{ fontSize: 12 }}>{row.sku}</code> },
     { key: 'nombre', label: 'Nombre' },
     { key: 'categoria', label: 'Categoría' },
     {
@@ -120,7 +104,7 @@ export default function Stock() {
         return <Badge variant={s.variant}>{s.label}</Badge>
       },
     },
-    { key: 'costo', label: 'Costo', render: row => formatCurrency(row.costo) },
+    { key: 'costo',  label: 'Costo',        render: row => formatCurrency(row.costo) },
     { key: 'precio', label: 'Precio Venta', render: row => formatCurrency(row.precio) },
     {
       key: 'estado',
@@ -131,19 +115,16 @@ export default function Stock() {
       key: 'acciones',
       label: 'Acciones',
       render: row => (
-        <button
-          className="btn btn-sm btn-secondary"
-          onClick={() => handleOpen(row)}
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>edit</span>
-          Editar
+        <button className="btn btn-sm btn-secondary" onClick={() => handleOpenAdjust(row)}>
+          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>tune</span>
+          Ajustar
         </button>
       ),
     },
   ]
 
-  const sinStockCount = productos.filter(p => p.stock <= 0 && p.estado === 'activo').length
-  const stockBajoCount = productos.filter(p => p.stock > 0 && p.stock <= p.stockMinimo && p.estado === 'activo').length
+  const sinStockCount   = productos.filter(p => p.stock <= 0 && p.estado === 'activo').length
+  const stockBajoCount  = productos.filter(p => p.stock > 0 && p.stock <= p.stockMinimo && p.estado === 'activo').length
 
   return (
     <div>
@@ -176,14 +157,12 @@ export default function Stock() {
             style={{ maxWidth: 180 }}
           >
             <option value="">Todas las categorías</option>
-            {categorias.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
+            {categorias.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpen()}>
-          <span className="material-symbols-outlined">add</span>
-          Nuevo Producto
+        <button className="btn btn-secondary" onClick={handleExport}>
+          <span className="material-symbols-outlined">download</span>
+          Exportar Excel
         </button>
       </div>
 
@@ -198,101 +177,46 @@ export default function Stock() {
         </div>
       </div>
 
+      {/* Modal ajuste de stock */}
       <Modal
-        isOpen={modalOpen}
-        onClose={handleClose}
-        title={editingId ? 'Editar producto' : 'Nuevo producto'}
-        size="lg"
+        isOpen={!!adjustModal}
+        onClose={handleCloseAdjust}
+        title={`Ajustar stock — ${adjustModal?.producto.nombre}`}
+        size="sm"
       >
-        <form onSubmit={handleSubmit}>
-          <div className="form-row form-row-2">
-            <FormField
-              label="SKU"
-              name="sku"
-              value={form.sku}
-              onChange={handleChange}
-              placeholder="Código único del producto"
-            />
-            <FormField
-              label="Categoría"
-              name="categoria"
-              type="select"
-              value={form.categoria}
-              onChange={handleChange}
-              options={CATEGORIAS_PRODUCTO}
-            />
-          </div>
+        <p className="text-muted" style={{ marginBottom: 16, fontSize: 13 }}>
+          Stock actual: <strong>{adjustModal?.producto.stock}</strong> unidades
+        </p>
 
+        <form onSubmit={handleSubmitAjuste}>
           <FormField
-            label="Nombre"
-            name="nombre"
-            value={form.nombre}
-            onChange={handleChange}
+            label="Operación"
+            name="tipo"
+            type="select"
+            value={ajuste.tipo}
+            onChange={e => setAjuste(a => ({ ...a, tipo: e.target.value }))}
+            options={[
+              { value: 'aumentar', label: 'Aumentar stock' },
+              { value: 'reducir',  label: 'Reducir stock'  },
+            ]}
+          />
+          <FormField
+            label="Cantidad"
+            name="cantidad"
+            type="number"
+            value={ajuste.cantidad}
+            onChange={e => setAjuste(a => ({ ...a, cantidad: e.target.value }))}
             required
-            placeholder="Nombre descriptivo del producto"
+            min="1"
+            placeholder="0"
           />
 
-          <div className="form-row form-row-2">
-            <FormField
-              label="Costo"
-              name="costo"
-              type="number"
-              value={form.costo}
-              onChange={handleChange}
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-            />
-            <FormField
-              label="Precio de Venta"
-              name="precio"
-              type="number"
-              value={form.precio}
-              onChange={handleChange}
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-            />
-          </div>
-
-          <div className="form-row form-row-3">
-            <FormField
-              label="Stock Actual"
-              name="stock"
-              type="number"
-              value={form.stock}
-              onChange={handleChange}
-              min="0"
-              placeholder="0"
-            />
-            <FormField
-              label="Stock Mínimo"
-              name="stockMinimo"
-              type="number"
-              value={form.stockMinimo}
-              onChange={handleChange}
-              min="0"
-              placeholder="0"
-            />
-            <FormField
-              label="Estado"
-              name="estado"
-              type="select"
-              value={form.estado}
-              onChange={handleChange}
-              options={[
-                { value: 'activo', label: 'Activo' },
-                { value: 'inactivo', label: 'Inactivo' },
-              ]}
-            />
-          </div>
-
           <div className="modal-footer" style={{ padding: 0, paddingTop: 16 }}>
-            <button type="button" className="btn btn-secondary" onClick={handleClose}>
+            <button type="button" className="btn btn-secondary" onClick={handleCloseAdjust}>
               Cancelar
             </button>
             <button type="submit" className="btn btn-primary">
-              {editingId ? 'Guardar cambios' : 'Crear producto'}
+              Confirmar
             </button>
           </div>
         </form>

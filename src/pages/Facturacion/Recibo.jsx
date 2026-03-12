@@ -6,6 +6,7 @@ import { useRecibos } from '../../hooks/useFacturacion'
 import { useClientes } from '../../hooks/useClientes'
 import { useNotify } from '../../components/ui/Notification'
 import { formatCurrency, formatDate, todayString } from '../../utils/formatters'
+import { exportToExcel } from '../../utils/exportExcel'
 import { FORMAS_PAGO } from '../../data/mockData'
 
 const EMPTY_FORM = {
@@ -68,6 +69,22 @@ export default function Recibo() {
     }
   }
 
+  const handleExport = () => {
+    exportToExcel({
+      filename: 'recibos',
+      title: 'Recibos',
+      columns: [
+        { label: 'Número',      key: 'numero' },
+        { label: 'Cliente',     key: 'cliente' },
+        { label: 'Fecha',       key: 'fecha',    format: r => formatDate(r.fecha) },
+        { label: 'Monto',       key: 'monto',    format: r => formatCurrency(r.monto) },
+        { label: 'Concepto',    key: 'concepto' },
+        { label: 'Forma de Pago', key: 'formaPago' },
+      ],
+      data: recibos,
+    })
+  }
+
   const columns = [
     { key: 'numero', label: 'Número' },
     { key: 'cliente', label: 'Cliente' },
@@ -81,10 +98,16 @@ export default function Recibo() {
     <div>
       <div className="d-flex justify-between align-center mb-3">
         <span className="text-muted">{recibos.length} recibos registrados</span>
-        <button className="btn btn-primary" onClick={handleOpen}>
-          <span className="material-symbols-outlined">add</span>
-          Nuevo Recibo
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={handleExport}>
+            <span className="material-symbols-outlined">download</span>
+            Exportar Excel
+          </button>
+          <button className="btn btn-primary" onClick={handleOpen}>
+            <span className="material-symbols-outlined">add</span>
+            Nuevo Recibo
+          </button>
+        </div>
       </div>
 
       <div className="card">

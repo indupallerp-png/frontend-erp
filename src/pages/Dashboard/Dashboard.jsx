@@ -137,13 +137,21 @@ export default function Dashboard() {
           <span className="material-symbols-outlined">people</span>
           Clientes
         </Link>
+        <Link to="/proveedores" className="quick-btn">
+          <span className="material-symbols-outlined">local_shipping</span>
+          Proveedores
+        </Link>
+        <Link to="/productos" className="quick-btn">
+          <span className="material-symbols-outlined">category</span>
+          Productos
+        </Link>
         <Link to="/facturacion" className="quick-btn">
           <span className="material-symbols-outlined">receipt_long</span>
           Facturación
         </Link>
         <Link to="/compra-stock" className="quick-btn">
           <span className="material-symbols-outlined">inventory_2</span>
-          Compra y Stock
+          Control de stock
         </Link>
         <Link to="/administracion-cuentas" className="quick-btn">
           <span className="material-symbols-outlined">account_balance</span>

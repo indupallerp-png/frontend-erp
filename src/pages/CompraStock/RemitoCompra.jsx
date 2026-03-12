@@ -8,6 +8,7 @@ import { useProveedores } from '../../hooks/useProveedores'
 import { useStock } from '../../hooks/useStock'
 import { useNotify } from '../../components/ui/Notification'
 import { formatCurrency, formatDate, getEstadoBadge, todayString } from '../../utils/formatters'
+import { exportToExcel } from '../../utils/exportExcel'
 
 const EMPTY_FORM = {
   proveedorId: '',
@@ -100,6 +101,22 @@ export default function RemitoCompra() {
     }
   }
 
+  const handleExport = () => {
+    exportToExcel({
+      filename: 'remitos_compra',
+      title: 'Remitos de Compra',
+      columns: [
+        { label: 'Número',    key: 'numero' },
+        { label: 'Proveedor', key: 'proveedor' },
+        { label: 'Fecha',     key: 'fecha',  format: r => formatDate(r.fecha) },
+        { label: 'Total',     key: 'total',  format: r => formatCurrency(r.total) },
+        { label: 'Estado',    key: 'estado' },
+        { label: 'Ítems',     key: 'items',  format: r => `${r.items?.length || 0} productos` },
+      ],
+      data: remitos,
+    })
+  }
+
   const columns = [
     { key: 'numero', label: 'Número' },
     { key: 'proveedor', label: 'Proveedor' },
@@ -121,10 +138,16 @@ export default function RemitoCompra() {
     <div>
       <div className="d-flex justify-between align-center mb-3">
         <span className="text-muted">{remitos.length} remitos registrados</span>
-        <button className="btn btn-primary" onClick={handleOpen}>
-          <span className="material-symbols-outlined">add</span>
-          Nuevo Remito de Compra
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={handleExport}>
+            <span className="material-symbols-outlined">download</span>
+            Exportar Excel
+          </button>
+          <button className="btn btn-primary" onClick={handleOpen}>
+            <span className="material-symbols-outlined">add</span>
+            Nuevo Remito de Compra
+          </button>
+        </div>
       </div>
 
       <div className="card">

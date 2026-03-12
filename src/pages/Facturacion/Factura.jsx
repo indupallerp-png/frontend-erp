@@ -8,6 +8,7 @@ import { useClientes } from '../../hooks/useClientes'
 import { useStock } from '../../hooks/useStock'
 import { useNotify } from '../../components/ui/Notification'
 import { formatCurrency, formatDate, getEstadoBadge, todayString } from '../../utils/formatters'
+import { exportToExcel } from '../../utils/exportExcel'
 
 const EMPTY_FORM = {
   tipo: 'A',
@@ -111,6 +112,24 @@ export default function Factura() {
     }
   }
 
+  const handleExport = () => {
+    exportToExcel({
+      filename: 'facturas',
+      title: 'Facturas',
+      columns: [
+        { label: 'Número',   key: 'numero' },
+        { label: 'Tipo',     key: 'tipo',     format: r => `Tipo ${r.tipo}` },
+        { label: 'Cliente',  key: 'cliente' },
+        { label: 'Fecha',    key: 'fecha',    format: r => formatDate(r.fecha) },
+        { label: 'Subtotal', key: 'subtotal', format: r => formatCurrency(r.subtotal) },
+        { label: 'IVA',      key: 'iva',      format: r => formatCurrency(r.iva) },
+        { label: 'Total',    key: 'total',    format: r => formatCurrency(r.total) },
+        { label: 'Estado',   key: 'estado' },
+      ],
+      data: facturas,
+    })
+  }
+
   const columns = [
     { key: 'numero', label: 'Número' },
     {
@@ -148,10 +167,16 @@ export default function Factura() {
     <div>
       <div className="d-flex justify-between align-center mb-3">
         <span className="text-muted">{facturas.length} facturas registradas</span>
-        <button className="btn btn-primary" onClick={handleOpen}>
-          <span className="material-symbols-outlined">add</span>
-          Nueva Factura
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={handleExport}>
+            <span className="material-symbols-outlined">download</span>
+            Exportar Excel
+          </button>
+          <button className="btn btn-primary" onClick={handleOpen}>
+            <span className="material-symbols-outlined">add</span>
+            Nueva Factura
+          </button>
+        </div>
       </div>
 
       <div className="card">

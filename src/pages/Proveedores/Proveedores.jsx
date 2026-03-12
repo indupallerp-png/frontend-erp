@@ -7,6 +7,7 @@ import { useProveedores } from '../../hooks/useProveedores'
 import { useNotify } from '../../components/ui/Notification'
 import { getEstadoBadge, sanitizeByField } from '../../utils/formatters'
 import { CONDICIONES_IVA } from '../../data/mockData'
+import { exportToExcel } from '../../utils/exportExcel'
 
 const EMPTY_FORM = {
   razonSocial: '',
@@ -97,6 +98,23 @@ export default function Proveedores() {
     }
   }
 
+  const handleExport = () => {
+    exportToExcel({
+      filename: 'proveedores',
+      title: 'Proveedores',
+      columns: [
+        { label: 'Razón Social',  key: 'razonSocial' },
+        { label: 'CUIT',          key: 'cuit' },
+        { label: 'Teléfono',      key: 'telefono' },
+        { label: 'Email',         key: 'email' },
+        { label: 'Dirección',     key: 'direccion' },
+        { label: 'Condición IVA', key: 'condicionIva' },
+        { label: 'Estado',        key: 'estado' },
+      ],
+      data: filtered,
+    })
+  }
+
   const columns = [
     { key: 'razonSocial', label: 'Razón Social' },
     { key: 'cuit', label: 'CUIT' },
@@ -142,10 +160,16 @@ export default function Proveedores() {
           <h1 className="page-title">Proveedores</h1>
           <p className="page-subtitle">{proveedores.filter(p => p.estado === 'activo').length} proveedores activos</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpen()}>
-          <span className="material-symbols-outlined">add_business</span>
-          Nuevo proveedor
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={handleExport}>
+            <span className="material-symbols-outlined">download</span>
+            Exportar Excel
+          </button>
+          <button className="btn btn-primary" onClick={() => handleOpen()}>
+            <span className="material-symbols-outlined">add_business</span>
+            Nuevo proveedor
+          </button>
+        </div>
       </div>
 
       <div className="search-bar">
